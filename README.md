@@ -32,3 +32,6 @@ I will be implementing the ABAC using a popular library called py_abac
 There is documentation available at https://py-abac.readthedocs.io/en/latest/ and at a high level
 allows for defining policies in JSON-like format, managing the policies with add/remove/update
 operations, and providing APIs that have runtime control decision-making.
+
+Run using 
+> python3 run.py
