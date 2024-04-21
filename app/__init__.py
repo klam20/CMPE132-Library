@@ -3,6 +3,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
+from flask_login import LoginManager
 import os
 
 myapp_obj = Flask(__name__)
@@ -17,8 +18,13 @@ myapp_obj.config.from_mapping(
     SQLALCHEMY_TRACK_MODIFICATIONS = False,
 )
 
+#Init db and bcrypt
 db = SQLAlchemy(myapp_obj)
 bcrypt = Bcrypt(myapp_obj)
+
+#Setup Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(myapp_obj)
 
 from app import routes  #The routes get imported below the Flask() object call
 from app import models
