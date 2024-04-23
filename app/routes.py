@@ -9,6 +9,7 @@ from .models import *
 #Default Redirect to home
 @myapp_obj.route("/")
 def index():
+    initializeDB()
     return redirect('/home')
 
 #Home page
@@ -62,6 +63,15 @@ def register():
             db.session.add(new_user)
             db.session.commit()
             return redirect("/login")
-
-
     return render_template('register.html', form=form)
+
+@myapp_obj.route("/browse_books", methods=['GET','POST'])
+def library():
+    if current_user.is_authenticated:
+        return render_template('browse_books_logged_in.html', title='Catalog')
+    else:
+        return render_template('browse_books_logged_out.html', title='Catalog')
+
+@myapp_obj.route("/manage_account", methods=['GET','POST'])
+def manageacc():
+    return render_template('manage_account.html', title='Manage Account')
