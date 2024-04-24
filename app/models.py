@@ -31,11 +31,31 @@ class UserAttributes(db.Model, UserMixin):
     role = db.Column(db.String(50))  # Role of the user (e.g., librarian, regular user)
     department = db.Column(db.String(100))  # Department the user belongs to (if applicable)
     fees = db.Column(db.Float, default=0.0)  # Current fees user owes
-    member_status = db.Column(db.String(30), default="")
-    can_order_books = db.Column(db.Boolean, default=False)  # Whether the user can order books
+    owns_num_books = db.Column(db.Integer, default = 0) #How many books they own
+    can_request_books = db.Column(db.Boolean, default=False)  # Whether the user can order books
+    can_checkout_books = db.Column(db.Boolean, default=False)  # Whether the user can order books
     can_manage_fines = db.Column(db.Boolean, default=False)  # Whether the user can 
     can_modify_catalog = db.Column(db.Boolean, default=False) #Whether the user can add/remove books in catalog
     can_modify_accounts = db.Column(db.Boolean, default=False) #Whether the user can add/delete accounts for whatever reason (admin)
+    wants_to_delete = db.Column(db.Boolean, default=False)  #Whether the user wants to delete, and requires librarian and admin to approve
+
+class CheckoutApproval(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    approved_by_librarian = db.Column(db.Boolean, default=False)
+    approved_by_assistant = db.Column(db.Boolean, default=False)
+
+class ManageFineApproval(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    approved_by_admin = db.Column(db.Boolean, default=False)
+    approved_by_librarian = db.Column(db.Boolean, default=False)
+
+class UserDeletionApproval(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    approved_by_admin = db.Column(db.Boolean, default=False)
+    approved_by_librarian = db.Column(db.Boolean, default=False)
 
 class Book(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -51,7 +71,7 @@ class BookAttributes(db.Model, UserMixin):
     book_id = db.Column(db.Integer, db.ForeignKey('book.id'), primary_key=True)
     genre = db.Column(db.String(100))  # Department the user belongs to (if applicable)
     stock_quantity = db.Column(db.Integer, default=0.0)  # Current fees user owes
-    is_available = db.Column(db.Boolean, default=False)  # Whether the user can order books
+    is_available = db.Column(db.Boolean, default=False)  # Whether the book is reserved for a high priority reason (like for a classroom let's say)
 
 class UserBooks(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -70,6 +90,8 @@ def initializeDB():
         db.session.add(new_user_attr)
         db.session.commit()
         #Insert librarian with some privileges
+
+        #Insert library assistant with some privileges
 
         #Insert some test users with base privileges   
 
