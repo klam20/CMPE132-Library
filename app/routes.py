@@ -10,6 +10,7 @@ from .models import *
 @myapp_obj.route("/")
 def index():
     initializeDB()
+    initializeBooks()
     return redirect('/home')
 
 #Home page
@@ -66,12 +67,53 @@ def register():
     return render_template('register.html', form=form)
 
 @myapp_obj.route("/browse_books", methods=['GET','POST'])
-def library():
+def library():    
+    #Fetch books from db
+    bookCount = Book.query.count()
+    books = Book.query.all()
     if current_user.is_authenticated:
-        return render_template('browse_books_logged_in.html', title='Catalog')
+        return render_template('browse_books_logged_in.html', title='Catalog', bookCount=bookCount, books=books)
     else:
-        return render_template('browse_books_logged_out.html', title='Catalog')
+        return render_template('browse_books_logged_out.html', title='Catalog', bookCount=bookCount, books=books)
+
+@myapp_obj.route('/browse_books/<int:book_id>', methods=['GET','POST'])        #URL varies to view different email messages
+def bookView(book_id):    
+    #Fetch books from db
+    book = Book.query.filter_by(id=book_id).first()
+    attributes = BookAttributes.query.filter_by(book_id=book_id).first()
+    if current_user.is_authenticated:
+        #Attempt to borrow book
+        if request.method == 'POST':                                      
+            if request.form.get('Borrow') == 'Borrow': 
+                #Check policy       
+                flash(f'Hello1')
+                return redirect('/browse_books/' + str(book_id))
+        return render_template('view_book_logged_in.html', title='Catalog', book=book, attributes=attributes)
+    else:
+        if request.method == 'POST':                                      
+            if request.form.get('Borrow') == 'Borrow': 
+                #Check policy   
+                flash(f'Hello2')
+                return redirect('/browse_books/' + str(book_id))
+
+        return render_template('view_book_logged_out.html', title='Catalog', book=book, attributes=attributes)
 
 @myapp_obj.route("/manage_account", methods=['GET','POST'])
 def manageacc():
     return render_template('manage_account.html', title='Manage Account')
+
+@myapp_obj.route('/search_book', methods=['GET'])
+def search_book():
+    query = request.args.get('query')
+    if query:
+        results = Book.query.filter(
+            Book.name.ilike(f"%{query}%") |
+            Book.author.ilike(f"%{query}%") | 
+            Book.synopsis.ilike(f"%{query}%"))
+        bookCount = results.count()
+        if current_user.is_authenticated:
+            return render_template('browse_books_logged_in.html', title='Catalog', bookCount=bookCount, books=results.all())
+        else:
+            return render_template('browse_books_logged_out.html', title='Catalog', bookCount=bookCount, books=results.all())
+    
+    

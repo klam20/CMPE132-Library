@@ -7,6 +7,8 @@
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link href="{{url_for('static', filename='books.css')}}" rel="stylesheet">
+
     <title>Browse Book Logged In</title>
   </head>
   <body>
@@ -45,6 +47,27 @@
       {% endfor %}
     {% endif %}
     {% endwith %}
+
+
+    <div class="list_books">
+      <h1>Browse Catalog</h1>
+
+      <form action="{{ url_for('search_book') }}" method="GET">
+        <input type="text" name="query" placeholder="Search...">
+        <button type="submit">Search</button>
+      </form>
+
+      {%if bookCount > 0%}
+        {%for book in books%}
+        <a href="browse_books/{{book.id}}" class="list-group-item list-group-item-action" aria-current="true">
+          <div class="d-flex w-100">
+            <h5>{{book.name}}</h5>
+            <h5>{{book.author}}</h5>
+          </div>
+        </a>
+        {%endfor%}
+      {%endif%}      
+    </div>    
 
 <!--Insert Content-->
 
