@@ -7,7 +7,7 @@
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <title>Manage Account Logged In</title>
+    <title>View Book Backlog</title>
   </head>
   <body>
 
@@ -23,9 +23,15 @@
         <li class="nav-item">
             <a class="nav-link" href="/browse_books">Browse Books<span class="sr-only">(current)</span></a>
         </li>
-        <li class="nav-item active">
-          <a class="nav-link" href="/manage_account">Manage Account<span class="sr-only">(current)</span></a>
+        <li class="nav-item">
+          <a class="nav-link" href="/manage_books">Manage Books<span class="sr-only">(current)</span></a>
         </li>
+
+        {%if library_staff or admin%}
+        <li class="nav-item active">
+          <a class="nav-link" href="/view_backlog">View Backlog<span class="sr-only">(current)</span></a>
+        </li>
+        {%endif%}
       </ul>
     </div>
 

@@ -13,7 +13,10 @@ class User(db.Model, UserMixin):
     lname = db.Column(db.String(60), nullable=True)
     date = db.Column(db.DateTime, default=datetime.now())
     password = db.Column(db.String(60), nullable=False)
-    user_attributes = db.relationship('UserAttributes', backref='user', lazy=True)
+    role = db.Column(db.String(50))  # Role of the user (e.g., librarian, regular user)
+    department = db.Column(db.String(100))  # Department the user belongs to (if applicable)
+    owns_num_books = db.Column(db.Integer, default = 0) #How many books they own
+    wants_to_delete = db.Column(db.Boolean, default=False)  #Whether the user wants to delete, and requires librarian and admin to approve
     owned_books = db.relationship('UserBooks', backref='user', lazy=True)
 
 
@@ -26,30 +29,11 @@ class User(db.Model, UserMixin):
     def getID(self):
         return self.id
 
-class UserAttributes(db.Model, UserMixin):
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    role = db.Column(db.String(50))  # Role of the user (e.g., librarian, regular user)
-    department = db.Column(db.String(100))  # Department the user belongs to (if applicable)
-    fees = db.Column(db.Float, default=0.0)  # Current fees user owes
-    owns_num_books = db.Column(db.Integer, default = 0) #How many books they own
-    can_request_books = db.Column(db.Boolean, default=False)  # Whether the user can order books
-    can_checkout_books = db.Column(db.Boolean, default=False)  # Whether the user can order books
-    can_manage_fines = db.Column(db.Boolean, default=False)  # Whether the user can 
-    can_modify_catalog = db.Column(db.Boolean, default=False) #Whether the user can add/remove books in catalog
-    can_modify_accounts = db.Column(db.Boolean, default=False) #Whether the user can add/delete accounts for whatever reason (admin)
-    wants_to_delete = db.Column(db.Boolean, default=False)  #Whether the user wants to delete, and requires librarian and admin to approve
-
 class CheckoutApproval(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     approved_by_librarian = db.Column(db.Boolean, default=False)
     approved_by_assistant = db.Column(db.Boolean, default=False)
-
-class ManageFineApproval(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    approved_by_admin = db.Column(db.Boolean, default=False)
-    approved_by_librarian = db.Column(db.Boolean, default=False)
 
 class UserDeletionApproval(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -77,20 +61,21 @@ class UserBooks(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     book_id = db.Column(db.Integer, db.ForeignKey('book.id'), nullable=False)
+    approved = db.Column(db.Boolean, default=False)
     # Additional attributes specific to the user-book relationship can be added here if needed
 
 def initializeDB():
     if not db.session.query(User).filter_by(email="admin@gmail.com").first():        #Insert admin with admin privileges
-        new_user = User(email="admin@gmail.com")
+        new_user = User(email="admin@gmail.com", role="Admin", department="Admin")
         new_user.set_password("password123")
         db.session.add(new_user)
         db.session.commit()
-        new_user_attr = UserAttributes(user_id=new_user.getID(), role="Admin", department="Administration", can_manage_fines=True)
-        #Change attributes                                     
-        db.session.add(new_user_attr)
-        db.session.commit()
+     
         #Insert librarian with some privileges
-
+        new_user = User(email="library@gmail.com", role="Librarian", department="Library")
+        new_user.set_password("password123")
+        db.session.add(new_user)
+        db.session.commit()
         #Insert library assistant with some privileges
 
         #Insert some test users with base privileges   
