@@ -14,11 +14,8 @@ class User(db.Model, UserMixin):
     date = db.Column(db.DateTime, default=datetime.now())
     password = db.Column(db.String(60), nullable=False)
     role = db.Column(db.String(50))  # Role of the user (e.g., librarian, regular user)
-    department = db.Column(db.String(100))  # Department the user belongs to (if applicable)
-    owns_num_books = db.Column(db.Integer, default = 0) #How many books they own
-    wants_to_delete = db.Column(db.Boolean, default=False)  #Whether the user wants to delete, and requires librarian and admin to approve
+    owns_num_books = db.Column(db.Integer, default = 0, nullable=True) #How many books they own
     owned_books = db.relationship('UserBooks', backref='user', lazy=True)
-
 
     def set_password(self,password):
         self.password = bcrypt.generate_password_hash(password)
@@ -64,15 +61,31 @@ class UserBooks(db.Model):
     approved = db.Column(db.Boolean, default=False)
     # Additional attributes specific to the user-book relationship can be added here if needed
 
+class Permissions(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    role = db.Column(db.String(50), nullable=False)
+
+    #Role based permissions for page access
+    can_view_book_backlog = db.Column(db.Boolean, default=False)    #Admin/Librarian/LibraryStaff
+    can_view_accounts = db.Column(db.Boolean, default=False)    #Admin only
+
+    #Button permissions
+    can_request_checkout = db.Column(db.Boolean, default=False)    #Making a request to checkout a book that is later approved (students,teachers)
+    can_approve_checkout = db.Column(db.Boolean, default=False)    #Adding book checkout to official db     (librarian/librarystaff)
+    can_modify_catalog = db.Column(db.Boolean, default=False)   #Adding/removing from catalog               (typically admin/librarian/librarystaff)
+    can_modify_accounts = db.Column(db.Boolean, default=False)  #Adding/removing account manually into db   (typically admin only)
+
+    # Additional attributes specific to the user-book relationship can be added here if needed
+
 def initializeDB():
     if not db.session.query(User).filter_by(email="admin@gmail.com").first():        #Insert admin with admin privileges
-        new_user = User(email="admin@gmail.com", role="Admin", department="Admin")
+        new_user = User(email="admin@gmail.com", role="Admin")
         new_user.set_password("password123")
         db.session.add(new_user)
         db.session.commit()
      
         #Insert librarian with some privileges
-        new_user = User(email="library@gmail.com", role="Librarian", department="Library")
+        new_user = User(email="library@gmail.com", role="Librarian")
         new_user.set_password("password123")
         db.session.add(new_user)
         db.session.commit()
@@ -80,7 +93,21 @@ def initializeDB():
 
         #Insert some test users with base privileges   
 
-        #Initialize sample books & attributes
+        #Initialize role permissions
+        temp_perm = Permissions (
+            #Role based permissions for page access
+            role = "Admin",
+            can_view_book_backlog = True,
+            can_view_accounts = True,
+
+            #Button permissions
+            can_request_checkout = True,
+            can_approve_checkout = True,
+            can_modify_catalog = True,
+            can_modify_accounts = True,
+        )
+        db.session.add(temp_perm)
+        db.session.commit()
 
 def initializeBooks():
         with open(os.path.join(basedir, 'static/books/books.csv'), 'r') as file:
