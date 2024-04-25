@@ -77,6 +77,10 @@ class Permissions(db.Model):
 
     # Additional attributes specific to the user-book relationship can be added here if needed
 
+def checkPermission(role, permission_name):
+    getRole = Permissions.query.filter_by(role=str(role)).first()
+    return bool(getattr(getRole, permission_name))    #Should return a bool
+
 def initializeDB():
     if not db.session.query(User).filter_by(email="admin@gmail.com").first():        #Insert admin with admin privileges
         new_user = User(email="admin@gmail.com", role="Admin")
@@ -107,6 +111,63 @@ def initializeDB():
             can_modify_accounts = True,
         )
         db.session.add(temp_perm)
+
+        temp_perm = Permissions (
+            #Role based permissions for page access
+            role = "Librarian",
+            can_view_book_backlog = True,
+            can_view_accounts = False,
+
+            #Button permissions
+            can_request_checkout = True,
+            can_approve_checkout = True,
+            can_modify_catalog = True,
+            can_modify_accounts = False,
+        )
+        db.session.add(temp_perm)
+
+        temp_perm = Permissions (
+            #Role based permissions for page access
+            role = "Library Assistant",
+            can_view_book_backlog = True,
+            can_view_accounts = False,
+
+            #Button permissions
+            can_request_checkout = True,
+            can_approve_checkout = True,
+            can_modify_catalog = False,
+            can_modify_accounts = False,
+        )
+        db.session.add(temp_perm)
+
+        temp_perm = Permissions (
+            #Role based permissions for page access
+            role = "Student",
+            can_view_book_backlog = True,
+            can_view_accounts = False,
+
+            #Button permissions
+            can_request_checkout = True,
+            can_approve_checkout = True,
+            can_modify_catalog = False,
+            can_modify_accounts = False,
+        )
+        db.session.add(temp_perm)
+
+        temp_perm = Permissions (
+            #Role based permissions for page access
+            role = "Teacher",
+            can_view_book_backlog = True,
+            can_view_accounts = False,
+
+            #Button permissions
+            can_request_checkout = True,
+            can_approve_checkout = True,
+            can_modify_catalog = False,
+            can_modify_accounts = False,
+        )
+        db.session.add(temp_perm)
+
         db.session.commit()
 
 def initializeBooks():

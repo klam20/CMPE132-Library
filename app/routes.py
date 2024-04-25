@@ -14,21 +14,25 @@ def index():
     return redirect('/home')
 
 #Home page
+
 @myapp_obj.route("/home", methods=['GET','POST'])
 def home():
-    form = LoginForm()
-                    
-    if current_user.is_authenticated:                                     #Check if logged in, display an HTML specifically
-        user = User.query.filter_by(id=current_user.get_id()).first()
-        library_staff = 0
-        if user.role in ("Librarian", "Library Assistant", "Admin"):
-            library_staff = 1
-                                   
-        if request.method == 'POST':                                      #for logged in user
-            if request.form.get('logOut') == 'Log-Out':                     
-                logout_user()
-                return redirect('/home')
-        return render_template('home_logged_in.html', form=form, library_staff = library_staff)
+    # Check if user is authenticated
+    if current_user.is_authenticated:
+        user_permissions = Permissions.query.filter_by(role=current_user.role).first()
+        can_view_book_backlog = user_permissions.can_view_book_backlog if user_permissions else False
+        can_view_accounts = user_permissions.can_view_accounts if user_permissions else False
+        can_request_checkout = user_permissions.can_request_checkout if user_permissions else False
+        can_approve_checkout = user_permissions.can_approve_checkout if user_permissions else False
+        can_modify_catalog = user_permissions.can_modify_catalog if user_permissions else False
+        can_modify_accounts = user_permissions.can_modify_accounts if user_permissions else False
+        return render_template('home_logged_in.html', 
+                               can_view_book_backlog=can_view_book_backlog,
+                               can_view_accounts=can_view_accounts,
+                               can_request_checkout=can_request_checkout,
+                               can_approve_checkout=can_approve_checkout,
+                               can_modify_catalog=can_modify_catalog,
+                               can_modify_accounts=can_modify_accounts)
     
     else:                                                                 #Likewise an HTML for logged-out user is used
         if request.method == 'POST':                                     
@@ -36,7 +40,7 @@ def home():
                 return redirect('/login')
             elif request.form.get('signUp') == 'Sign-Up':
                 return redirect('/register')
-        return render_template('home_logged_out.html', form=form)
+        return render_template('home_logged_out.html')
 
 #Login Page
 @myapp_obj.route("/login", methods=['GET','POST'])
