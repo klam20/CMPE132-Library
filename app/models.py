@@ -27,6 +27,7 @@ class User(db.Model, UserMixin):
 class CheckoutApproval(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    book_id = db.Column(db.Integer, db.ForeignKey('book.id'), nullable=False)
     approved_by_librarian = db.Column(db.Boolean, default=False)
     approved_by_assistant = db.Column(db.Boolean, default=False)
 
@@ -101,6 +102,16 @@ def initializeDB():
         new_user = User(email="student@gmail.com", role="Student")
         new_user.set_password("123")
         db.session.add(new_user)
+        db.session.commit()
+
+        #Insert a requested book by a user
+        new_checkout = UserBooks(user_id=0, book_id=0, approved=False)
+        db.session.add(new_checkout)
+        db.session.commit()
+
+        #Insert a book request
+        new_checkout = CheckoutApproval(user_id=0, book_id=0, approved_by_librarian=False, approved_by_assistant=False)
+        db.session.add(new_checkout)
         db.session.commit()
 
         #Initialize role permissions

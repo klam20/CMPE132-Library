@@ -101,13 +101,29 @@ def bookView(book_id):
     #Fetch books from db
     book = Book.query.filter_by(id=book_id).first()
     attributes = BookAttributes.query.filter_by(book_id=book_id).first()
-
+    
     if current_user.is_authenticated:     
         #Attempt to borrow book
         if request.method == 'POST':                                      
             if request.form.get('Borrow') == 'Borrow': 
-                #Check policy       
-                flash(f'Hello1')
+                if (attributes.stock_quantity > 0):
+                    flash(f'You borrowed one book, check your log for approval')
+                    #Update stock
+                    attributes.stock_quantity = attributes.stock_quantity - 1
+
+                    #Update user back log
+                    new_userbook = UserBooks(user_id=current_user.id, book_id=book_id, approved=False)
+
+                    #Update library back log
+                    new_backlog = CheckoutApproval(user_id=current_user.id, book_id=book_id, approved_by_librarian=False, approved_by_assistant=False)
+                    
+                    #Add & Commit
+                    db.session.add(new_userbook)
+                    db.session.add(new_backlog)
+                    db.session.commit()
+
+                else:
+                    flash(f'Sorry! Out of stock')
                 return redirect('/browse_books/' + str(book_id))
         return render_template('view_book_logged_in.html', title='Catalog', book=book, attributes=attributes, role = current_user.role)
     else:
@@ -134,7 +150,10 @@ def search_book():
     
 @myapp_obj.route('/view_book_backlog', methods=['GET'])
 def book_backlog():
-    return render_template('view_book_backlog.html', title='Book Backlog', role=current_user.role)
+    #Obtain the book backlog using userBooks
+    backlog_count = CheckoutApproval.query.count()
+    checkout_backlog = CheckoutApproval.query.all()
+    return render_template('view_book_backlog.html', title='Book Backlog', role=current_user.role, backlog=checkout_backlog, count=backlog_count)
 
 
 @myapp_obj.route('/view_delete_backlog', methods=['GET'])
