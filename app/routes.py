@@ -26,13 +26,21 @@ def home():
         can_approve_checkout = user_permissions.can_approve_checkout if user_permissions else False
         can_modify_catalog = user_permissions.can_modify_catalog if user_permissions else False
         can_modify_accounts = user_permissions.can_modify_accounts if user_permissions else False
+
+        if request.method == 'POST':                                      #for logged in user
+            if request.form.get('logOut') == 'Log-Out':                     
+                logout_user()
+                return redirect('/home')
+
         return render_template('home_logged_in.html', 
                                can_view_book_backlog=can_view_book_backlog,
                                can_view_accounts=can_view_accounts,
                                can_request_checkout=can_request_checkout,
                                can_approve_checkout=can_approve_checkout,
                                can_modify_catalog=can_modify_catalog,
-                               can_modify_accounts=can_modify_accounts)
+                               can_modify_accounts=can_modify_accounts,
+                               role=current_user.role
+                               )
     
     else:                                                                 #Likewise an HTML for logged-out user is used
         if request.method == 'POST':                                     
@@ -82,12 +90,9 @@ def library():
     bookCount = Book.query.count()
     books = Book.query.all()
 
-    if current_user.is_authenticated:
-        user = User.query.filter_by(id=current_user.get_id()).first()
-        library_staff = 0
-        if user.role in ("Librarian", "Library Assistant", "Admin"):
-            library_staff = 1                  
-        return render_template('browse_books_logged_in.html', title='Catalog', bookCount=bookCount, books=books, library_staff=library_staff)
+    if current_user.is_authenticated:             
+        return render_template('browse_books_logged_in.html', title='Catalog', bookCount=bookCount, books=books, role=current_user.role)
+
     else:
         return render_template('browse_books_logged_out.html', title='Catalog', bookCount=bookCount, books=books)
 
@@ -97,19 +102,14 @@ def bookView(book_id):
     book = Book.query.filter_by(id=book_id).first()
     attributes = BookAttributes.query.filter_by(book_id=book_id).first()
 
-    if current_user.is_authenticated:
-        user = User.query.filter_by(id=current_user.get_id()).first()
-        library_staff = 0
-        if user.role in ("Librarian", "Library Assistant", "Admin"):
-            library_staff = 1
-                                      
+    if current_user.is_authenticated:     
         #Attempt to borrow book
         if request.method == 'POST':                                      
             if request.form.get('Borrow') == 'Borrow': 
                 #Check policy       
                 flash(f'Hello1')
                 return redirect('/browse_books/' + str(book_id))
-        return render_template('view_book_logged_in.html', title='Catalog', book=book, attributes=attributes, library_staff=library_staff)
+        return render_template('view_book_logged_in.html', title='Catalog', book=book, attributes=attributes, role = current_user.role)
     else:
         if request.method == 'POST':                                      
             if request.form.get('Borrow') == 'Borrow': 
@@ -132,25 +132,17 @@ def search_book():
         else:
             return render_template('browse_books_logged_out.html', title='Catalog', bookCount=bookCount, books=results.all())
     
-@myapp_obj.route('/view_backlog', methods=['GET'])
-def backlog():
-    user = User.query.filter_by(id=current_user.get_id()).first()
-    library_staff = 0
-    admin = 0
-    if user.role in ("Librarian", "Library Assistant"):
-        library_staff = 1
-        return render_template('view_book_backlog.html', title='Backlog', library_staff=library_staff, admin=admin)
+@myapp_obj.route('/view_book_backlog', methods=['GET'])
+def book_backlog():
+    return render_template('view_book_backlog.html', title='Book Backlog', role=current_user.role)
 
-    elif user.role == "Admin":
-        admin = 1
-        return render_template('view_delete_backlog.html', title='Backlog', library_staff=library_staff, admin=admin)
+
+@myapp_obj.route('/view_delete_backlog', methods=['GET'])
+def delete_backlog():
+    return render_template('view_delete_backlog.html', title='Delete Backlog', role=current_user.role)
 
 
 @myapp_obj.route('/manage_books', methods=['GET'])
-def manage_books():
-    user = User.query.filter_by(id=current_user.get_id()).first()
-    library_staff = 0
-    if user.role in ("Librarian", "Library Assistant", "Admin"):
-        library_staff = 1                  
-    return render_template('manage_books.html', title='Manage Books', library_staff=library_staff)
+def manage_books():            
+    return render_template('manage_books.html', title='Manage Books', role=current_user.role)
 

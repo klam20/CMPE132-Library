@@ -7,6 +7,7 @@ from flask_login import UserMixin
 import csv
 
 class User(db.Model, UserMixin):
+
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     fname = db.Column(db.String(60), nullable=True)
@@ -22,9 +23,6 @@ class User(db.Model, UserMixin):
 
     def check_password(self, password):
         return bcrypt.check_password_hash(self.password, password)
-    
-    def getID(self):
-        return self.id
 
 class CheckoutApproval(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -38,7 +36,7 @@ class UserDeletionApproval(db.Model):
     approved_by_admin = db.Column(db.Boolean, default=False)
     approved_by_librarian = db.Column(db.Boolean, default=False)
 
-class Book(db.Model, UserMixin):
+class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), unique=True, nullable=False)
     author = db.Column(db.String(120), nullable=False)
@@ -48,7 +46,7 @@ class Book(db.Model, UserMixin):
     owned_by_users = db.relationship('UserBooks', backref='book', lazy=True)
 
 
-class BookAttributes(db.Model, UserMixin):
+class BookAttributes(db.Model):
     book_id = db.Column(db.Integer, db.ForeignKey('book.id'), primary_key=True)
     genre = db.Column(db.String(100))  # Department the user belongs to (if applicable)
     stock_quantity = db.Column(db.Integer, default=0.0)  # Current fees user owes
@@ -84,18 +82,26 @@ def checkPermission(role, permission_name):
 def initializeDB():
     if not db.session.query(User).filter_by(email="admin@gmail.com").first():        #Insert admin with admin privileges
         new_user = User(email="admin@gmail.com", role="Admin")
-        new_user.set_password("password123")
+        new_user.set_password("123")
         db.session.add(new_user)
         db.session.commit()
      
         #Insert librarian with some privileges
         new_user = User(email="library@gmail.com", role="Librarian")
-        new_user.set_password("password123")
+        new_user.set_password("123")
         db.session.add(new_user)
         db.session.commit()
         #Insert library assistant with some privileges
-
-        #Insert some test users with base privileges   
+        new_user = User(email="assistant@gmail.com", role="Library Assistant")
+        new_user.set_password("123")
+        db.session.add(new_user)
+        db.session.commit()
+        
+        #Insert student user with base privileges   
+        new_user = User(email="student@gmail.com", role="Student")
+        new_user.set_password("123")
+        db.session.add(new_user)
+        db.session.commit()
 
         #Initialize role permissions
         temp_perm = Permissions (
