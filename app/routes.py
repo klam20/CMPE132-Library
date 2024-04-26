@@ -20,12 +20,12 @@ def home():
     # Check if user is authenticated
     if current_user.is_authenticated:
         user_permissions = Permissions.query.filter_by(role=current_user.role).first()
-        can_view_book_backlog = user_permissions.can_view_book_backlog if user_permissions else False
-        can_view_accounts = user_permissions.can_view_accounts if user_permissions else False
-        can_request_checkout = user_permissions.can_request_checkout if user_permissions else False
-        can_approve_checkout = user_permissions.can_approve_checkout if user_permissions else False
-        can_modify_catalog = user_permissions.can_modify_catalog if user_permissions else False
-        can_modify_accounts = user_permissions.can_modify_accounts if user_permissions else False
+        can_view_book_backlog = user_permissions.can_view_book_backlog
+        can_view_accounts = user_permissions.can_view_accounts
+        can_request_checkout = user_permissions.can_request_checkout
+        can_approve_checkout = user_permissions.can_approve_checkout 
+        can_modify_catalog = user_permissions.can_modify_catalog
+        can_modify_accounts = user_permissions.can_modify_accounts
 
         if request.method == 'POST':                                      #for logged in user
             if request.form.get('logOut') == 'Log-Out':                     
@@ -34,12 +34,7 @@ def home():
 
         return render_template('home_logged_in.html', 
                                can_view_book_backlog=can_view_book_backlog,
-                               can_view_accounts=can_view_accounts,
-                               can_request_checkout=can_request_checkout,
-                               can_approve_checkout=can_approve_checkout,
-                               can_modify_catalog=can_modify_catalog,
-                               can_modify_accounts=can_modify_accounts,
-                               role=current_user.role
+                               can_view_accounts=can_view_accounts
                                )
     
     else:                                                                 #Likewise an HTML for logged-out user is used
@@ -86,12 +81,22 @@ def register():
 
 @myapp_obj.route("/browse_books", methods=['GET','POST'])
 def library():
+
     #Fetch books from db
     bookCount = Book.query.count()
     books = Book.query.all()
 
-    if current_user.is_authenticated:             
-        return render_template('browse_books_logged_in.html', title='Catalog', bookCount=bookCount, books=books, role=current_user.role)
+    if current_user.is_authenticated:
+        user_permissions = Permissions.query.filter_by(role=current_user.role).first()
+        can_view_book_backlog = user_permissions.can_view_book_backlog
+        can_view_accounts = user_permissions.can_view_accounts
+        can_request_checkout = user_permissions.can_request_checkout
+        can_approve_checkout = user_permissions.can_approve_checkout 
+        can_modify_catalog = user_permissions.can_modify_catalog
+        can_modify_accounts = user_permissions.can_modify_accounts           
+        return render_template('browse_books_logged_in.html', title='Catalog', bookCount=bookCount,
+                                books=books, can_view_book_backlog=can_view_book_backlog,
+                                can_view_accounts=can_view_accounts)
 
     else:
         return render_template('browse_books_logged_out.html', title='Catalog', bookCount=bookCount, books=books)
@@ -104,6 +109,14 @@ def bookView(book_id):
     
     if current_user.is_authenticated:     
         #Attempt to borrow book
+        user_permissions = Permissions.query.filter_by(role=current_user.role).first()
+        can_view_book_backlog = user_permissions.can_view_book_backlog
+        can_view_accounts = user_permissions.can_view_accounts
+        can_request_checkout = user_permissions.can_request_checkout
+        can_approve_checkout = user_permissions.can_approve_checkout 
+        can_modify_catalog = user_permissions.can_modify_catalog
+        can_modify_accounts = user_permissions.can_modify_accounts   
+
         if request.method == 'POST':                                      
             if request.form.get('Borrow') == 'Borrow': 
                 if (attributes.stock_quantity > 0):
@@ -112,10 +125,10 @@ def bookView(book_id):
                     attributes.stock_quantity = attributes.stock_quantity - 1
 
                     #Update user back log
-                    new_userbook = UserBooks(user_id=current_user.id, book_id=book_id, approved=False)
+                    new_userbook = UserBooks(user_id=current_user.id, book_id=book_id, approved="Pending")
 
                     #Update library back log
-                    new_backlog = CheckoutApproval(user_id=current_user.id, book_id=book_id, approved_by_librarian=False, approved_by_assistant=False)
+                    new_backlog = CheckoutApproval(user_id=current_user.id, book_id=book_id)
                     
                     #Add & Commit
                     db.session.add(new_userbook)
@@ -125,7 +138,7 @@ def bookView(book_id):
                 else:
                     flash(f'Sorry! Out of stock')
                 return redirect('/browse_books/' + str(book_id))
-        return render_template('view_book_logged_in.html', title='Catalog', book=book, attributes=attributes, role = current_user.role)
+        return render_template('view_book_logged_in.html', title='Catalog', book=book, attributes=attributes, can_view_book_backlog=can_view_book_backlog, can_view_accounts=can_view_accounts)
     else:
         if request.method == 'POST':                                      
             if request.form.get('Borrow') == 'Borrow': 
@@ -148,20 +161,111 @@ def search_book():
         else:
             return render_template('browse_books_logged_out.html', title='Catalog', bookCount=bookCount, books=results.all())
     
-@myapp_obj.route('/view_book_backlog', methods=['GET'])
+@myapp_obj.route('/view_book_backlog', methods=['GET', 'POST'])
 def book_backlog():
+    user_permissions = Permissions.query.filter_by(role=current_user.role).first()
+    can_view_book_backlog = user_permissions.can_view_book_backlog
+    can_view_accounts = user_permissions.can_view_accounts
+    can_request_checkout = user_permissions.can_request_checkout
+    can_approve_checkout = user_permissions.can_approve_checkout 
+    can_modify_catalog = user_permissions.can_modify_catalog
+    can_modify_accounts = user_permissions.can_modify_accounts   
     #Obtain the book backlog using userBooks
     backlog_count = CheckoutApproval.query.count()
     checkout_backlog = CheckoutApproval.query.all()
-    return render_template('view_book_backlog.html', title='Book Backlog', role=current_user.role, backlog=checkout_backlog, count=backlog_count)
+
+    if request.method == "POST":
+        #Obtain the user and book associated through the post request        
+        #Checkout query and also set the approver role now
+
+        if request.form.get('approve'):
+            #Approve
+            id, user_id, book_id = getUserBook(request.form.get('approve')) 
+            checkout = CheckoutApproval.query.filter_by(id=id, user_id=user_id, book_id=book_id).first()
+            checkout.approver = current_user.role
+            
+            #UserBooks query
+            userBooks = UserBooks.query.filter_by(id=id, user_id=user_id, book_id=book_id).first()
+
+            #Decisions
+            checkout.decision = "Approved" 
+            checkout.approver = current_user.role
+            userBooks.approved = "Approved"
+            userBooks.start_time = datetime.now()
+            #Do not decrement book stock
+            db.session.add(userBooks)
+            db.session.add(checkout)
+            flash(f'Approved')
+        elif request.form.get('deny'):
+            #Deny
+            id, user_id, book_id = getUserBook(request.form.get('deny')) 
+
+            checkout = CheckoutApproval.query.filter_by(id=id, user_id=user_id, book_id=book_id).first()
+            
+            #UserBooks query
+            userBooks = UserBooks.query.filter_by(id=id, user_id=user_id, book_id=book_id).first()
+
+            #Decisions
+            checkout.decision = "Denied"
+            checkout.approver = current_user.role
+
+            userBooks.approved = "Denied"
+
+            #Increment book stock back
+            incBookStock = (BookAttributes.query.filter_by(book_id=book_id).first())
+            incBookStock.stock_quantity = incBookStock.stock_quantity + 1
+            db.session.add(userBooks)
+            db.session.add(checkout)
+            db.session.add(incBookStock)
+            flash(f'Deny')
+        else: 
+            flash(f'Unexpected behavior')
+
+        db.session.commit()
+
+    return render_template('view_book_backlog.html', title='Book Backlog', can_view_accounts=can_view_accounts,
+                            can_view_book_backlog=can_view_book_backlog, backlog=checkout_backlog, count=backlog_count)
 
 
-@myapp_obj.route('/view_delete_backlog', methods=['GET'])
+@myapp_obj.route('/view_delete_backlog', methods=['GET', 'POST'])
 def delete_backlog():
-    return render_template('view_delete_backlog.html', title='Delete Backlog', role=current_user.role)
+    user_permissions = Permissions.query.filter_by(role=current_user.role).first()
+    can_view_book_backlog = user_permissions.can_view_book_backlog
+    can_view_accounts = user_permissions.can_view_accounts
+    can_request_checkout = user_permissions.can_request_checkout
+    can_approve_checkout = user_permissions.can_approve_checkout 
+    can_modify_catalog = user_permissions.can_modify_catalog
+    can_modify_accounts = user_permissions.can_modify_accounts   
+    return render_template('view_delete_backlog.html', title='Delete Backlog', can_view_accounts=can_view_accounts,
+                            can_view_book_backlog=can_view_book_backlog)
 
 
-@myapp_obj.route('/manage_books', methods=['GET'])
+@myapp_obj.route('/manage_books', methods=['GET', 'POST'])
 def manage_books():            
-    return render_template('manage_books.html', title='Manage Books', role=current_user.role)
+    user_permissions = Permissions.query.filter_by(role=current_user.role).first()
+    can_view_book_backlog = user_permissions.can_view_book_backlog
+    can_view_accounts = user_permissions.can_view_accounts
+    can_request_checkout = user_permissions.can_request_checkout
+    can_approve_checkout = user_permissions.can_approve_checkout 
+    can_modify_catalog = user_permissions.can_modify_catalog
+    can_modify_accounts = user_permissions.can_modify_accounts   
+
+    book_count = UserBooks.query.count()
+    books = UserBooks.query.all()
+
+    if request.method == "POST":
+        if request.form.get('return'):
+            id, user_id, book_id = getUserBook(request.form.get('return'))
+            returnedBook = UserBooks.query.filter_by(id=id, user_id=user_id, book_id=book_id).first()
+            returnedBookStock = BookAttributes.query.filter_by(book_id=book_id).first()
+            returnedBook.end_time = datetime.now()
+            returnedBook.approved = "Returned"
+            returnedBookStock.stock_quantity = returnedBookStock.stock_quantity + 1
+            db.session.add(returnedBookStock)
+            db.session.add(returnedBook)
+            db.session.commit()
+            flash(f'Wanted to return book')
+
+    return render_template('manage_books.html', title='Manage Books', can_view_accounts=can_view_accounts,
+                            can_view_book_backlog=can_view_book_backlog, count=book_count, books=books)
 

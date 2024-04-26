@@ -5,6 +5,7 @@ from app import basedir, os
 from datetime import datetime
 from flask_login import UserMixin
 import csv
+import string
 
 class User(db.Model, UserMixin):
 
@@ -28,8 +29,9 @@ class CheckoutApproval(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     book_id = db.Column(db.Integer, db.ForeignKey('book.id'), nullable=False)
-    approved_by_librarian = db.Column(db.Boolean, default=False)
-    approved_by_assistant = db.Column(db.Boolean, default=False)
+    approver = db.Column(db.String(50), default="n/a")
+    decision = db.Column(db.String(25), default="Pending")
+
 
 class UserDeletionApproval(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -57,7 +59,9 @@ class UserBooks(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     book_id = db.Column(db.Integer, db.ForeignKey('book.id'), nullable=False)
-    approved = db.Column(db.Boolean, default=False)
+    approved = db.Column(db.String(25), default=False)  #Can be ["Pending", "Denied", "Approved", "Returned"]
+    start_time = db.Column(db.DateTime, nullable=True)
+    end_time = db.Column(db.DateTime, nullable=True) 
     # Additional attributes specific to the user-book relationship can be added here if needed
 
 class Permissions(db.Model):
@@ -105,12 +109,12 @@ def initializeDB():
         db.session.commit()
 
         #Insert a requested book by a user
-        new_checkout = UserBooks(user_id=0, book_id=0, approved=False)
+        new_checkout = UserBooks(user_id=1, book_id=1, approved=False)
         db.session.add(new_checkout)
         db.session.commit()
 
         #Insert a book request
-        new_checkout = CheckoutApproval(user_id=0, book_id=0, approved_by_librarian=False, approved_by_assistant=False)
+        new_checkout = CheckoutApproval(user_id=1, book_id=1)
         db.session.add(new_checkout)
         db.session.commit()
 
@@ -215,6 +219,11 @@ def initializeBooks():
                     # Add the book attributes to the session and commit changes to the database
                     db.session.add(sample_book_attributes)
                     db.session.commit()
+
+def getUserBook(input):
+    id, user_id, book_id = input.split(',')    #Use , delimiter to split string
+    return (id.strip(), user_id.strip(), book_id.strip())   #.strip() removes extra whitespace/trailing
+
 
 @login_manager.user_loader
 def load_user(user_id):
