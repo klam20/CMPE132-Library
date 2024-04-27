@@ -41,7 +41,7 @@
         {% if can_view_accounts == True %}
 
         <li class="nav-item">
-          <a class="nav-link" href="/view_delete_backlog">View Delete Backlog<span class="sr-only">(current)</span></a>
+          <a class="nav-link" href="/view_delete_backlog">Admin Acc Manager<span class="sr-only">(current)</span></a>
         </li>
         {% endif %}
 
@@ -69,10 +69,21 @@
     <div class="list_books">
       <h1>Browse Catalog</h1>
 
-      <form action="{{ url_for('search_book') }}" method="GET">
+      <form action="/search_book" method="GET">
         <input type="text" name="query" placeholder="Search...">
         <button type="submit">Search</button>
       </form>
+
+      {%if can_modify_catalog%}
+      <form action="/modify_catalog" method="POST">
+        <input type="text" name="bookname" placeholder="Enter Book Name...">
+        <input type="text" name="author" placeholder="Enter Author...">
+        <input type="text" name="synopsis" placeholder="Enter Synopsis...">
+        <input type="text" name="genre" placeholder="Enter Genre...">
+        <input type="text" name="stock" placeholder="Enter Stock...">
+        <button type="submit">Submit</button>
+      </form>
+      {%endif%}
 
       {%if bookCount > 0%}
         {%for book in books%}

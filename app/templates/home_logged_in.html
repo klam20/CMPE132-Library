@@ -41,7 +41,7 @@
         {% if can_view_accounts == True %}
 
         <li class="nav-item">
-          <a class="nav-link" href="/view_delete_backlog">View Delete Backlog<span class="sr-only">(current)</span></a>
+          <a class="nav-link" href="/view_delete_backlog">Admin Acc Manager<span class="sr-only">(current)</span></a>
         </li>
         {% endif %}
 
@@ -64,9 +64,21 @@
         {% endfor %}
       {% endif %}
       {% endwith %}
+    
+    <div class="cat">
+      <img src="{{url_for('static', filename='cat.gif')}}"/>
+    </div>
 
+    <div class="welcome">
+      <p>Welcome To Library</p>
+      <form method="POST">
+        <button name="Delete" value="Delete">Delete Your Account?</button>
+      </form>
+
+    </div>
     <!--Insert Content-->
     </div>
+
     
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->

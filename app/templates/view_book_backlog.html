@@ -33,7 +33,7 @@
         <!--Jinja2 html based on role-->
         {% if can_view_book_backlog == True %}
 
-          <li class="nav-item">
+          <li class="nav-item active">
             <a class="nav-link" href="/view_book_backlog">View Book Backlog<span class="sr-only">(current)</span></a>
           </li>
         {% endif %}
@@ -41,7 +41,7 @@
         {% if can_view_accounts == True %}
 
         <li class="nav-item">
-          <a class="nav-link" href="/view_delete_backlog">View Delete Backlog<span class="sr-only">(current)</span></a>
+          <a class="nav-link" href="/view_delete_backlog">Admin Acc Manager<span class="sr-only">(current)</span></a>
         </li>
         {% endif %}
 

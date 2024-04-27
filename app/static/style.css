@@ -10,5 +10,25 @@ h5 {
 }
 
 body {
-    background-color:honeydew;
+    background-color: hsla(228, 67%, 89%, 1);
+}
+
+.list-group-item {
+    background-color: hsla(228, 67%, 85%, 1)
+}
+
+.cat {
+    height:200px;
+    position: relative;
+    text-align:center;
+    margin-top:10%;
+}
+
+.welcome {
+    text-align: center;
+    font-size: 40px;
+    color: #333;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    font-weight: bold;
 }

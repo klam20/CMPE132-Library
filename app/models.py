@@ -3,7 +3,7 @@ from app import login_manager
 from app import bcrypt
 from app import basedir, os
 from datetime import datetime
-from flask_login import UserMixin
+from flask_login import UserMixin, AnonymousUserMixin
 import csv
 import string
 
@@ -16,8 +16,8 @@ class User(db.Model, UserMixin):
     date = db.Column(db.DateTime, default=datetime.now())
     password = db.Column(db.String(60), nullable=False)
     role = db.Column(db.String(50))  # Role of the user (e.g., librarian, regular user)
-    owns_num_books = db.Column(db.Integer, default = 0, nullable=True) #How many books they own
     owned_books = db.relationship('UserBooks', backref='user', lazy=True)
+    user_request_delete = db.Column(db.Boolean, default=False)
 
     def set_password(self,password):
         self.password = bcrypt.generate_password_hash(password)
@@ -53,15 +53,14 @@ class BookAttributes(db.Model):
     book_id = db.Column(db.Integer, db.ForeignKey('book.id'), primary_key=True)
     genre = db.Column(db.String(100))  # Department the user belongs to (if applicable)
     stock_quantity = db.Column(db.Integer, default=0.0)  # Current fees user owes
-    is_available = db.Column(db.Boolean, default=False)  # Whether the book is reserved for a high priority reason (like for a classroom let's say)
 
 class UserBooks(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     book_id = db.Column(db.Integer, db.ForeignKey('book.id'), nullable=False)
-    approved = db.Column(db.String(25), default=False)  #Can be ["Pending", "Denied", "Approved", "Returned"]
+    approved = db.Column(db.String(25), default="Pending")  #Can be ["Pending", "Denied", "Approved", "Returned"]
     start_time = db.Column(db.DateTime, nullable=True)
-    end_time = db.Column(db.DateTime, nullable=True) 
+    end_time = db.Column(db.DateTime, nullable=True)
     # Additional attributes specific to the user-book relationship can be added here if needed
 
 class Permissions(db.Model):
@@ -85,31 +84,31 @@ def checkPermission(role, permission_name):
     return bool(getattr(getRole, permission_name))    #Should return a bool
 
 def initializeDB():
-    if not db.session.query(User).filter_by(email="admin@gmail.com").first():        #Insert admin with admin privileges
-        new_user = User(email="admin@gmail.com", role="Admin")
+    if not db.session.query(User).filter_by(email="admin").first():        #Insert admin with admin privileges
+        new_user = User(fname ="Orange", lname = "Cat", email="admin", role="Admin")
         new_user.set_password("123")
         db.session.add(new_user)
         db.session.commit()
      
         #Insert librarian with some privileges
-        new_user = User(email="library@gmail.com", role="Librarian")
+        new_user = User(fname ="Brown", lname = "Snail", email="library", role="Librarian")
         new_user.set_password("123")
         db.session.add(new_user)
         db.session.commit()
         #Insert library assistant with some privileges
-        new_user = User(email="assistant@gmail.com", role="Library Assistant")
+        new_user = User(fname ="Purple", lname = "Dinosaur", email="assistant", role="Library Assistant")
         new_user.set_password("123")
         db.session.add(new_user)
         db.session.commit()
         
         #Insert student user with base privileges   
-        new_user = User(email="student@gmail.com", role="Student")
+        new_user = User(fname ="Clifford", lname = "The Big Red Dog", email="student", role="Student")
         new_user.set_password("123")
         db.session.add(new_user)
         db.session.commit()
 
         #Insert a requested book by a user
-        new_checkout = UserBooks(user_id=1, book_id=1, approved=False)
+        new_checkout = UserBooks(user_id=1, book_id=1, approved="Pending")
         db.session.add(new_checkout)
         db.session.commit()
 
@@ -164,12 +163,12 @@ def initializeDB():
         temp_perm = Permissions (
             #Role based permissions for page access
             role = "Student",
-            can_view_book_backlog = True,
+            can_view_book_backlog = False,
             can_view_accounts = False,
 
             #Button permissions
             can_request_checkout = True,
-            can_approve_checkout = True,
+            can_approve_checkout = False,
             can_modify_catalog = False,
             can_modify_accounts = False,
         )
@@ -178,7 +177,7 @@ def initializeDB():
         temp_perm = Permissions (
             #Role based permissions for page access
             role = "Teacher",
-            can_view_book_backlog = True,
+            can_view_book_backlog = False,
             can_view_accounts = False,
 
             #Button permissions
@@ -188,7 +187,6 @@ def initializeDB():
             can_modify_accounts = False,
         )
         db.session.add(temp_perm)
-
         db.session.commit()
 
 def initializeBooks():
@@ -213,16 +211,15 @@ def initializeBooks():
                         book_id=sample_book.id,
                         genre=sample_book_details["genre"],
                         stock_quantity=float(sample_book_details["stock_quantity"]),  # Convert to float if necessary
-                        is_available=bool(sample_book_details["is_available"])  # Convert to bool if necessary
                     )
 
                     # Add the book attributes to the session and commit changes to the database
                     db.session.add(sample_book_attributes)
                     db.session.commit()
 
-def getUserBook(input):
-    id, user_id, book_id = input.split(',')    #Use , delimiter to split string
-    return (id.strip(), user_id.strip(), book_id.strip())   #.strip() removes extra whitespace/trailing
+def splitFunction(input):
+    a, b, c = input.split(',')    #Use , delimiter to split string
+    return (a.strip(), b.strip(), c.strip())   #.strip() removes extra whitespace/trailing
 
 
 @login_manager.user_loader
