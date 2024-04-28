@@ -24,6 +24,10 @@
         <li class="nav-item active">
             <a class="nav-link" href="/browse_books">Browse Books<span class="sr-only">(current)</span></a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/manage_books">Manage Books<span class="sr-only">(current)</span></a>
+        </li>
+
 
 
 
@@ -57,7 +61,7 @@
     {% with messages = get_flashed_messages() %}
     {% if messages %}
       {% for message in messages %}
-        <div class = "flash-message">ERROR: {{ message }}</div>
+        <div class = "flash-message">{{ message }}</div>
       {% endfor %}
     {% endif %}
     {% endwith %}

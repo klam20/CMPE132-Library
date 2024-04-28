@@ -221,6 +221,11 @@ def splitFunction(input):
     a, b, c = input.split(',')    #Use , delimiter to split string
     return (a.strip(), b.strip(), c.strip())   #.strip() removes extra whitespace/trailing
 
+def showEncryptedPasswords():
+    pw = User.query.all()
+    for user in pw:
+        print(str(user.email), str(user.password))
+
 
 @login_manager.user_loader
 def load_user(user_id):

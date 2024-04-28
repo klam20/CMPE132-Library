@@ -17,6 +17,7 @@ def index():
 def home():
     initializeDB()      #Runs one time, afterwards it is blocked
     initializeBooks()
+    #showEncryptedPasswords()    #Shows encrypted passwords of all accounts just for learning purposes, should be removed in general
     # Check if user is authenticated
     if current_user.is_authenticated:
         user_permissions = Permissions.query.filter_by(role=current_user.role).first()
@@ -74,7 +75,7 @@ def register():
             flash(f'Account already exists')
             return redirect("/register")
         else:
-            new_user = User(email=form.email.data, role="Student")
+            new_user = User(email=form.email.data, role="Student", fname=form.fname.data, lname=form.lname.data)
             new_user.set_password(form.password.data)                                              
             db.session.add(new_user)
             db.session.commit()

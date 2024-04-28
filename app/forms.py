@@ -7,6 +7,8 @@ from wtforms.validators import DataRequired #Validators help ensure a form is no
 class RegistrationForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
+    fname = StringField('First Name', validators=[DataRequired()])
+    lname = StringField('Last Name', validators=[DataRequired()])
     submit = SubmitField('Register')
 
 #One for login form

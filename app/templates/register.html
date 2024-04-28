@@ -42,8 +42,22 @@
     <!--Registration Form-->
     <form class = "registerForm" method="POST">
         <h1>Registration Form</h1>
-        <form action="" method="post" novalidate>
-            {{ form.hidden_tag() }}
+        <form action="/register" method="post" novalidate>
+            {{form.hidden_tag()}}
+
+            <div class="input-field">
+              <p>
+                  {{ form.fname.label}}<br>
+                  {{ form.fname(size=50) }}
+              </p>
+          </div>
+
+          <div class="input-field">
+            <p>
+                {{ form.lname.label}}<br>
+                {{ form.lname(size=50) }}
+            </p>
+        </div>
             <div class="input-field">
                 <i class="fas fa-envelope"></i>
                 <p>
@@ -59,7 +73,7 @@
             </div>            
 
             <div class="button-container">
-                <p>{{ form.submit()}}</p>
+                <p>{{form.submit()}}</p>
             </div>
 
             <div class="signin-container">
