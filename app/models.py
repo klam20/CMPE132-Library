@@ -77,7 +77,6 @@ class Permissions(db.Model):
     can_modify_catalog = db.Column(db.Boolean, default=False)   #Adding/removing from catalog               (typically admin/librarian/librarystaff)
     can_modify_accounts = db.Column(db.Boolean, default=False)  #Adding/removing account manually into db   (typically admin only)
 
-    # Additional attributes specific to the user-book relationship can be added here if needed
 
 def checkPermission(role, permission_name):
     getRole = Permissions.query.filter_by(role=str(role)).first()

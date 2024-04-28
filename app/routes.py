@@ -17,7 +17,7 @@ def index():
 def home():
     initializeDB()      #Runs one time, afterwards it is blocked
     initializeBooks()
-    #showEncryptedPasswords()    #Shows encrypted passwords of all accounts just for learning purposes, should be removed in general
+    #showEncryptedPasswords()    #Shows encrypted passwords of all accounts just for bcrypt learning purposes, should be removed in general
     # Check if user is authenticated
     if current_user.is_authenticated:
         user_permissions = Permissions.query.filter_by(role=current_user.role).first()
